@@ -1,0 +1,15 @@
+export interface geoCode {
+place_id: number,
+licence: string,
+osm_type: string,
+lat: string,
+lon: string,
+class: string,
+type: string,
+place_rank: number,
+importance: number,
+adresstype: string,
+name: string,
+display_name: string,
+boudingbox: [string],
+}
