@@ -36,6 +36,11 @@ export default function UserBoardScreen() {
 		const disconnecting = async() => {
 			await Disconnect();
 			setIsUserLoggedIn(false);
+			
+			// Timeout de 2 secondes avant redirection
+			setTimeout(() => {
+				router.push('/Login');
+			}, 2000);
 		}
 
   return (
@@ -52,6 +57,11 @@ export default function UserBoardScreen() {
 		resizeMode="cover"
 	  >
 		<View style={styles.overlay}>
+		  {/* Back Button */}
+		  <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+			<Text style={styles.backButtonText}>← Retour</Text>
+		  </TouchableOpacity>
+
 		  {/* Header */}
 		  <View style={styles.header}>
 			<Text style={styles.logo}>🗓️</Text>
@@ -70,16 +80,6 @@ export default function UserBoardScreen() {
 						  <Text style={styles.featureText}>Accédez à nos événements</Text>
 </TouchableOpacity>
 
-						<TouchableOpacity style={styles.feature} onPress={() => router.push('/EventProposal')}>
-						  <Text style={styles.featureIcon}>📮</Text>
-						  <Text style={styles.featureText}>Proposer un événement</Text>
-						</TouchableOpacity>
-
-
-						<TouchableOpacity style={styles.feature} onPress={() => router.push('/Profile')}>
-						  <Text style={styles.featureIcon}>👨🏻‍🔧</Text>
-						  <Text style={styles.featureText}>Éditer mon profil</Text>
-						</TouchableOpacity>
 						<TouchableOpacity style={styles.feature} onPress={() => disconnecting()}>
 						  <Text style={styles.featureIcon}>👨🏻‍🔧</Text>
 						  <Text style={styles.featureText}>Déconnexion</Text>
@@ -97,9 +97,12 @@ export default function UserBoardScreen() {
 		<>
 		 <View style={styles.featuresContainer}>
 		<View style={styles.feature}>
-						  <Text style={styles.featureIcon}>❌❌</Text>
-						  <Text style={styles.featureText}>Vous n'êtes pas connectée</Text>
-						  <Text style={styles.login}><Text style={styles.loginLink} onPress={() => router.push('/Login')}>Cliquez ici</Text></Text>
+						  <Text style={styles.featureIcon}>🔐</Text>
+						  <Text style={styles.featureText}>Connexion requise</Text>
+						  <Text style={styles.login}>Connectez-vous pour accéder à votre tableau de bord</Text>
+				  <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/Login')}>
+					<Text style={styles.loginButtonText}>Se connecter</Text>
+				  </TouchableOpacity>
 						</View>
 
 		</View>
@@ -113,7 +116,7 @@ export default function UserBoardScreen() {
 const styles = StyleSheet.create({
   container: {
 	flex: 1,
-	backgroundColor: '#244d9a',
+	backgroundColor: '#173786',
   },
   backgroundImage: {
 	flex: 1,
@@ -126,6 +129,19 @@ const styles = StyleSheet.create({
 	justifyContent: 'space-between',
 	paddingHorizontal: 24,
 	paddingVertical: 40,
+  },
+  backButton: {
+	alignSelf: 'flex-start',
+	backgroundColor: 'rgba(255, 255, 255, 0.2)',
+	paddingHorizontal: 15,
+	paddingVertical: 8,
+	borderRadius: 20,
+	marginBottom: 10,
+  },
+  backButtonText: {
+	color: '#ffffff',
+	fontSize: 16,
+	fontWeight: '600',
   },
   header: {
 	alignItems: 'center',
@@ -156,7 +172,7 @@ const styles = StyleSheet.create({
 	marginVertical: 40,
   },
   feature: {
-	flexDirection: 'row',
+	flexDirection: 'column',
 	alignItems: 'center',
 	backgroundColor: 'rgba(255, 255, 255, 0.1)',
 	borderRadius: 16,
@@ -166,51 +182,41 @@ const styles = StyleSheet.create({
 	borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   featureIcon: {
-	fontSize: 32,
-	marginRight: 16,
+	fontSize: 48,
+	marginBottom: 16,
   },
   featureText: {
-	fontSize: 18,
-	color: '#ffffff',
-	fontWeight: '500',
-	flex: 1,
-  },
-  ctaButton: {
-	backgroundColor: '#4CAF50',
-	paddingVertical: 18,
-	paddingHorizontal: 32,
-	borderRadius: 16,
-	alignItems: 'center',
-	marginBottom: 20,
-	shadowColor: '#000',
-	shadowOffset: { width: 0, height: 4 },
-	shadowOpacity: 0.3,
-	shadowRadius: 8,
-	elevation: 8,
-  },
-  ctaButtonText: {
 	fontSize: 20,
-	fontWeight: '700',
 	color: '#ffffff',
-	letterSpacing: 0.5,
+	fontWeight: '700',
+	textAlign: 'center',
+	marginBottom: 12,
   },
   footer: {
 	alignItems: 'center',
   },
 	login: {
-	fontSize: 14,
-	color: '#c8e6c9',
+	fontSize: 16,
+	color: 'rgba(255, 255, 255, 0.9)',
 	textAlign: 'center',
-	lineHeight: 20,
-	marginBottom: 10,
+	lineHeight: 22,
+	marginBottom: 15,
+	paddingHorizontal: 10,
   },
-  loginLink: {
-	color: '#ffffff',
+  loginButton: {
+	backgroundColor: '#4CAF50',
+	paddingVertical: 12,
+	paddingHorizontal: 20,
+	borderRadius: 20,
+	alignItems: 'center',
+	marginTop: 15,
+	marginHorizontal: 20,
+  },
+  loginButtonText: {
+	fontSize: 16,
 	fontWeight: '600',
-	textDecorationLine: 'underline',
-	cursor: 'pointer',
-  }
-  ,
+	color: '#ffffff',
+  },
   footerText: {
 	fontSize: 14,
 	color: '#c8e6c9',

@@ -6,4 +6,6 @@ export  interface Event {
   location: string;
   imageUrl: string;
   isActive: boolean;
+  participants: string[]; // Array des IDs des utilisateurs participants
+  maxParticipants?: number; // Nombre maximum de participants (optionnel)
 }

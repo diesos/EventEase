@@ -8,22 +8,10 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="Login"
-        options={{ headerShown: true, title: "", headerTransparent: true }}
-      />
-      <Stack.Screen name="Register"
-        options={{ headerShown: true, title: "", headerTransparent: true }}
-
-      />
-      <Stack.Screen name="UserBoard"
-        options={{ headerShown: true, title: "", headerTransparent: true }}
-      />
-          <Stack.Screen name="EventProposal"
-        options={{ headerShown: true, title: "", headerTransparent: true }}
-      />
-          <Stack.Screen name="Event"
-        options={{ headerShown: true, title: "", headerTransparent: true }}
-      />
+      <Stack.Screen name="Login" />
+      <Stack.Screen name="Register" />
+      <Stack.Screen name="UserBoard" />
+      <Stack.Screen name="EventProposal" />
     </Stack>
 
 

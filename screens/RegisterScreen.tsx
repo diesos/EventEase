@@ -63,6 +63,11 @@ const handleRegister = async () => {
         blurRadius={5}
       >
         <View style={styles.overlay}>
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+            <Text style={styles.backButtonText}>← Accueil</Text>
+          </TouchableOpacity>
+
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>EventEase</Text>
@@ -164,7 +169,7 @@ const handleRegister = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#244d9a',
+    backgroundColor: '#173786',
   },
   backgroundImage: {
     flex: 1,
@@ -178,6 +183,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 40,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 10,
+  },
+  backButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     alignItems: 'center',

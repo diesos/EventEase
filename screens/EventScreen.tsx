@@ -1,6 +1,7 @@
-import { deleteEvent, fetchEvents } from "@/features/events/services";
+import { deleteEvent, editEvent, fetchEvents } from "@/features/events/services";
 import { router } from "expo-router";
 import { Calendar } from 'react-native-calendars';
+import { WeatherService } from '../features/weather/services/Weather.service';
 
 import React, { useEffect, useState } from "react";
 import {
@@ -16,6 +17,8 @@ import {
 } from "react-native";
 import { isLoggedIn } from "../features/auth/services/isLoggedIn";
 
+import CreateEventModal from '../features/events/components/eventCrud';
+import NotLoggedInView from '../components/NotLoggedInView';
 import { Event, User } from '../types';
 
 export default function UserBoardScreen() {
@@ -25,13 +28,25 @@ export default function UserBoardScreen() {
 	const [isLoading, setIsLoading] = useState<boolean>(true);
 	const [isDeleting, setIsDeleting] = useState<boolean>(false);
 	const [selectedDate, setSelectedDate] = useState(new Date());
+	const [weatherData, setWeatherData] = useState<{ [key: string]: string }>({});
+	const [editModalVisible, setEditModalVisible] = useState(false);
+	const [eventToEdit, setEventToEdit] = useState<Event | undefined>(undefined);
+	const [isSaving, setIsSaving] = useState(false);
+	const [createModalVisible, setCreateModalVisible] = useState(false);
+	const [calendarVisible, setCalendarVisible] = useState(false);
 
 
 	useEffect(() => {
 		checkLogin();
 		eventList();
 		setIsLoading(false)
-		setIsDeleting(false)
+	}, [selectedDate]);
+
+	useEffect(() => {
+		if (isDeleting) {
+			eventList();
+			setIsDeleting(false);
+		}
 	}, [isDeleting]);
 
 	const checkLogin = async () => {
@@ -45,10 +60,48 @@ export default function UserBoardScreen() {
 				setActualUser(null);
 			}
 		}
+
+		const fetchWeatherByDay = async (town: string) => {
+			console.log('ICIIIIIII',town);
+			try {
+				const response = await WeatherService.fetchWeather(town)
+				if (response && response.main && response.main.temp !== undefined){
+					console.log(response)
+					const rawWeather = response.main.temp.toFixed(0)
+					return(rawWeather + '°')
+				}
+				return 'N/A';
+			} catch (error) {
+				console.error('Weather fetch error:', error);
+				return 'N/A';
+			}
+		}
 	const eventList = async () =>{
 				const events = await fetchEvents();
 				if (events){
-					setEventFetched(events)
+					// S'assurer que tous les événements ont un array participants
+					const eventsWithParticipants = events.map(event => ({
+						...event,
+						participants: event.participants || []
+					}));
+					setEventFetched(eventsWithParticipants)
+					// Fetch weather for each unique location
+					const uniqueLocations = [...new Set(events.map(event => event.location))];
+					const weatherPromises = uniqueLocations.map(async location => {
+						if (location) {
+							const temp = await fetchWeatherByDay(location);
+							return { location, temp };
+						}
+						return null;
+					});
+					const weatherResults = await Promise.all(weatherPromises);
+					const newWeatherData: { [key: string]: string } = {};
+					weatherResults.forEach(result => {
+						if (result) {
+							newWeatherData[result.location] = result.temp;
+						}
+					});
+					setWeatherData(newWeatherData);
 					console.log(events)
 					console.log(typeof(events[0]?.date))
 				}
@@ -69,7 +122,7 @@ export default function UserBoardScreen() {
 		})
 	}
 
-	 const handleDelete = (event) => {
+	 const handleDelete = (event: Event) => {
     Alert.alert(
       "Supprimer l'évenement",
       `Êtes-vous sûr de vouloir supprimer "${event.title}" ? Cette action est irréversible.`,
@@ -93,13 +146,89 @@ export default function UserBoardScreen() {
     );
   };
 
+  const handleEdit = (event: Event) => {
+    setEventToEdit(event);
+    setEditModalVisible(true);
+  };
 
-type ItemProps = {title: string};
-const Item = ({title}: ItemProps) => (
-  <View style={styles.item}>
-    <Text style={styles.title}>{title}</Text>
-  </View>
-);
+  const handleCloseEditModal = () => {
+    setEditModalVisible(false);
+    setEventToEdit(undefined);
+  };
+
+  const handleStartSaving = () => {
+    setIsSaving(true);
+  };
+
+  const handleFinishSaving = () => {
+    setIsSaving(false);
+    setIsDeleting(true); // Pour rafraîchir la liste
+  };
+
+  const handleCreateEvent = () => {
+    setCreateModalVisible(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setCreateModalVisible(false);
+  };
+
+  const toggleCalendar = () => {
+    setCalendarVisible(!calendarVisible);
+  };
+
+  const handleParticipation = async (event: Event) => {
+    console.log('🔵 handleParticipation appelé');
+    console.log('🔵 actualUser:', actualUser);
+    console.log('🔵 event.participants avant:', event.participants);
+
+    // Utiliser l'email comme identifiant si pas d'ID
+    const userId = actualUser?.id || actualUser?.email;
+
+    if (!userId) {
+      console.log('❌ Pas d\'utilisateur connecté ou pas d\'identifiant');
+      return;
+    }
+
+    console.log('🔵 userId utilisé:', userId);
+
+    const isParticipating = event.participants?.includes(userId);
+    console.log('🔵 isParticipating:', isParticipating);
+
+    let updatedParticipants: string[];
+
+    if (isParticipating) {
+      // Retirer l'utilisateur des participants
+      updatedParticipants = event.participants.filter(id => id !== userId);
+      console.log('🔴 Désinscription, nouveaux participants:', updatedParticipants);
+    } else {
+      // Ajouter l'utilisateur aux participants
+      updatedParticipants = [...(event.participants || []), userId];
+      console.log('🟢 Inscription, nouveaux participants:', updatedParticipants);
+    }
+
+    const updatedEvent = {
+      ...event,
+      participants: updatedParticipants
+    };
+
+    console.log('🔵 Event à sauvegarder:', updatedEvent);
+
+    try {
+      await editEvent(updatedEvent);
+      console.log('✅ Event sauvegardé avec succès');
+      setIsDeleting(true); // Pour rafraîchir la liste
+    } catch (error) {
+      console.error('❌ Erreur lors de la participation:', error);
+    }
+  };
+
+  const isUserParticipating = (event: Event): boolean => {
+    const userId = actualUser?.id || actualUser?.email;
+    return event.participants?.includes(userId || '') || false;
+  };
+
+
 
   return (
 	<SafeAreaView style={styles.container}>
@@ -115,111 +244,175 @@ const Item = ({title}: ItemProps) => (
 		resizeMode="cover"
 	  >
 		<View style={styles.overlay}>
+		  {/* Back Button */}
+		  <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+			<Text style={styles.backButtonText}>← Retour</Text>
+		  </TouchableOpacity>
+
 		  {/* Header */}
 		  <View style={styles.header}>
-
+			<Text style={styles.logo}>🗓️</Text>
+			<Text style={styles.title}>Mes Événements</Text>
 			<Text style={styles.subtitle}>
-			 Voici tous nos évenements
+			 Bienvenue {actualUser?.firstName}
 			</Text>
 		  </View>
 
-					  {/* Features */}
-					  { eventFetched && !isLoading ?
-					  (
-					  <View style={styles.featuresContainer}>
-										<Calendar
-  // Customize the appearance of the calendar
-  style={{
-    borderWidth: 1,
-    borderColor: 'gray',
-    height: 350
-  }}
-   theme={{
-        backgroundColor: '#ffffff',
-        calendarBackground: '#ffffff',
-        textSectionTitleColor: '#b6c1cd',
-        selectedDayBackgroundColor: '#00adf5',
-        selectedDayTextColor: '#ffffff',
-        todayTextColor: '#00adf5',
-        dayTextColor: '#2d4150',
-        textDisabledColor: '#dd99ee'
-      }}
-  // Specify the current date
-  current={new Date().toUTCString()}
-  // Callback that gets called when the user selects a day
-  onDayPress={day => {
-	console.log('selected day', day);
-	setSelectedDate(new Date(day.dateString));
-  }}
-  // Mark specific dates as marked
-  markedDates={eventFetched?.reduce((acc, event) => ({
-	...acc,
-	[new Date(event.date).toISOString().split('T')[0]]: {
-	  marked: true,
-	  selectedColor: 'blue'
-	}
-  }), {})}
-/>
-						<FlatList
-						 data={eventFetched.filter((v) => new Date(v.date).toISOString().split('T')[0] === new Date(selectedDate).toISOString().split('T')[0])}
-						 renderItem={({item}) =>
+		  {/* Toggle Calendar Button */}
+		  <TouchableOpacity style={styles.toggleButton} onPress={toggleCalendar}>
+			<Text style={styles.toggleButtonText}>
+			  {calendarVisible ? '📅 Masquer calendrier' : '📅 Afficher calendrier'}
+			</Text>
+		  </TouchableOpacity>
 
-						 <>
-						 		<View style={styles.featuresContainer}>
-									<View style={styles.feature}>
-										<View style={styles.featureInner}>
+		  {/* Calendar */}
+		  {calendarVisible && (
+			<View style={styles.calendarContainer}>
+			  <Calendar
+				style={styles.calendar}
+				theme={{
+				  backgroundColor: '#ffffff',
+				  calendarBackground: '#ffffff',
+				  textSectionTitleColor: '#b6c1cd',
+				  selectedDayBackgroundColor: '#00adf5',
+				  selectedDayTextColor: '#ffffff',
+				  todayTextColor: '#00adf5',
+				  dayTextColor: '#2d4150',
+				  textDisabledColor: '#dd99ee'
+				}}
+				current={new Date().toISOString().split('T')[0]}
+				onDayPress={day => {
+				  setSelectedDate(new Date(day.dateString));
+				}}
+				markedDates={eventFetched?.reduce((acc, event) => ({
+				  ...acc,
+				  [new Date(event.date).toISOString().split('T')[0]]: {
+					marked: true,
+					selectedColor: '#4CAF50'
+				  }
+				}), {})}
+			  />
+			</View>
+		  )}
 
-										<Text style={styles.featureIcon}>{item.title.toUpperCase()}</Text>
-										</View>
-											<View>
-												<Text style={styles.featureText}>{item.description}</Text>
-											</View>
-											<View style={styles.featureInner}>
-												<Text style={styles.featureSubText}> 📆{converDateToFr(item.date)}</Text>
+		  {/* Add Event Button */}
+		  <TouchableOpacity style={styles.addButton} onPress={handleCreateEvent}>
+			<Text style={styles.addButtonText}>+ Créer un événement</Text>
+		  </TouchableOpacity>
 
-												<TouchableOpacity onPress={() => handleDelete(item)}>
-													<Text>❌❌</Text>
-												</TouchableOpacity>
-											</View>
-									</View>
-								</View>
+		  {/* Events List */}
+		  <View style={styles.eventsContainer}>
+			<Text style={styles.eventsTitle}>
+			  Événements du {selectedDate.toLocaleDateString('fr-FR')}
+			</Text>
 
-						</> }
-       					 keyExtractor={item => item.id}
-						/>
+			{ eventFetched && !isLoading ?
+			  (
+				<FlatList
+				  data={eventFetched.filter((v) => new Date(v.date).toISOString().split('T')[0] === new Date(selectedDate).toISOString().split('T')[0])}
+				  renderItem={({item}) =>
+					<View style={styles.eventCard}>
+					  <View style={styles.eventHeader}>
+						<Text style={styles.eventTitle}>{item.title}</Text>
+						<View style={styles.actionButtons}>
+						  <TouchableOpacity onPress={() => handleEdit(item)} style={styles.editButton}>
+							<Text style={styles.buttonText}>✏️</Text>
+						  </TouchableOpacity>
+						  <TouchableOpacity onPress={() => handleDelete(item)} style={styles.deleteButton}>
+							<Text style={styles.buttonText}>🗑️</Text>
+						  </TouchableOpacity>
+						</View>
+					  </View>
 
+					  <Text style={styles.eventDescription}>{item.description}</Text>
+
+					  {/* Informations de participation */}
+					  <View style={styles.participationInfo}>
+						<Text style={styles.participantCount}>
+						  👥 {(item.participants || []).length} participant{((item.participants || []).length) > 1 ? 's' : ''}
+						  {item.maxParticipants && ` / ${item.maxParticipants}`}
+						</Text>
+
+						<TouchableOpacity
+						  style={[
+							styles.participateButton,
+							isUserParticipating(item) ? styles.participateButtonActive : styles.participateButtonInactive
+						  ]}
+						  onPress={() => handleParticipation(item)}
+						>
+						  <Text style={[
+							styles.participateButtonText,
+							isUserParticipating(item) ? styles.participateButtonTextActive : styles.participateButtonTextInactive
+						  ]}>
+							{isUserParticipating(item) ? '✓ Inscrit' : '+ Participer'}
+						  </Text>
+						</TouchableOpacity>
+					  </View>
+
+					  <View style={styles.eventFooter}>
+						<Text style={styles.eventTime}>
+						  📅 {converDateToFr(item.date)}
+						</Text>
+						{item.location && (
+						  <Text style={styles.eventLocation}>
+							📍 {item.location} {weatherData[item.location] && `(${weatherData[item.location]})`}
+						  </Text>
+						)}
+					  </View>
 					</View>
-					  )
-					  :
-					  (
-								  <View style={styles.featuresContainer}>
-									<Text>Pas d'évenement actuellement</Text>
+				  }
+				  keyExtractor={item => item.id}
+				  showsVerticalScrollIndicator={false}
+				  ListEmptyComponent={
+					<View style={styles.emptyContainer}>
+					  <Text style={styles.emptyText}>Aucun événement ce jour-là</Text>
+					  <Text style={styles.emptySubText}>Créez votre premier événement !</Text>
 					</View>
-					  )
-						}
-
-		  <View style={styles.footer}></View>
-			<Text style={styles.footerText}>© 2024 EventEase. Tous droits réservés.</Text>
+				  }
+				/>
+			  )
+			  :
+			  (
+				<View style={styles.loadingContainer}>
+				  <Text style={styles.loadingText}>Chargement des événements...</Text>
+				</View>
+			  )
+			}
 		  </View>
-		</ImageBackground>
-		</>
-
+		</View>
+	  </ImageBackground>
+	</>
 	) : (
+		<NotLoggedInView 
+		  message="Connectez-vous pour accéder à vos événements et découvrir toutes les activités disponibles"
+		  buttonText="Se connecter"
+		/>
+	)}
 
-		<><Text> Pas connectée veuillez vous connecter en cliquant </Text>
-		<Text style={styles.login}><Text style={styles.loginLink} onPress={() => router.push('/LoginScreen')}>ici</Text>
-			ici
-		</Text>
-		</>
-	 )}
-	 </SafeAreaView>
+	{/* Modals */}
+	<CreateEventModal
+	  visible={editModalVisible}
+	  onClose={handleCloseEditModal}
+	  editEvent={eventToEdit}
+	  isSaving={isSaving}
+	  onStartSaving={handleStartSaving}
+	  onFinishSaving={handleFinishSaving}
+	/>
 
-);}
+	<CreateEventModal
+	  visible={createModalVisible}
+	  onClose={handleCloseCreateModal}
+	  isSaving={isSaving}
+	  onStartSaving={handleStartSaving}
+	  onFinishSaving={handleFinishSaving}
+	/>
+	</SafeAreaView>
+  );}
 
 const styles = StyleSheet.create({
   container: {
 	flex: 1,
-	backgroundColor: '#244d9a',
+	backgroundColor: '#173786',
   },
   backgroundImage: {
 	flex: 1,
@@ -229,119 +422,223 @@ const styles = StyleSheet.create({
   overlay: {
 	flex: 1,
 	backgroundColor: 'rgba(21, 55, 143, 0.85)',
-	justifyContent: 'space-between',
-	paddingHorizontal: 24,
-	paddingVertical: 40,
+	paddingHorizontal: 20,
+	paddingTop: 40,
+  },
+  backButton: {
+	alignSelf: 'flex-start',
+	backgroundColor: 'rgba(255, 255, 255, 0.2)',
+	paddingHorizontal: 15,
+	paddingVertical: 8,
+	borderRadius: 20,
+	marginBottom: 10,
+  },
+  backButtonText: {
+	color: '#ffffff',
+	fontSize: 16,
+	fontWeight: '600',
   },
   header: {
 	alignItems: 'center',
-	marginTop: 60,
+	marginBottom: 15,
+  },
+  toggleButton: {
+	backgroundColor: 'rgba(255, 255, 255, 0.2)',
+	paddingVertical: 8,
+	paddingHorizontal: 16,
+	borderRadius: 20,
+	alignItems: 'center',
+	marginBottom: 10,
+	borderWidth: 1,
+	borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  toggleButtonText: {
+	color: '#ffffff',
+	fontSize: 14,
+	fontWeight: '500',
   },
   logo: {
-	fontSize: 64,
-	marginBottom: 16,
+	fontSize: 40,
+	marginBottom: 6,
   },
   title: {
-	fontSize: 42,
+	fontSize: 24,
 	fontWeight: '800',
 	color: '#ffffff',
 	textAlign: 'center',
-	marginBottom: 8,
+	marginBottom: 2,
 	textShadowColor: 'rgba(0, 0, 0, 0.3)',
 	textShadowOffset: { width: 0, height: 2 },
 	textShadowRadius: 4,
   },
   subtitle: {
-	fontSize: 18,
+	fontSize: 14,
 	color: '#e8f5e8',
 	textAlign: 'center',
 	fontWeight: '300',
 	letterSpacing: 0.5,
   },
-  featuresContainer: {
-	marginVertical: 0,
+  calendarContainer: {
+	marginBottom: 15,
+	borderRadius: 12,
+	overflow: 'hidden',
+	backgroundColor: '#ffffff',
   },
-  feature: {
-	flexDirection: 'column',
-	justifyContent: 'space-around',
-	flexGrow : 1,
-	backgroundColor: 'rgba(255, 255, 255, 0.34)',
-	borderRadius: 16,
-	padding: 20,
-	marginBottom: 16,
-	borderWidth: 1,
-	borderColor: 'rgba(255, 255, 255, 0.2)',
+  calendar: {
+	borderRadius: 12,
   },
-  featureIcon: {
-	fontSize: 22,
-	fontFamily: 'times new roman',
-	fontWeight: 'bold',
-	marginRight: 16,
-	marginBottom: 16,
-  },
-  featureInner: {
-	flexDirection: 'row',
-	justifyContent: 'space-between'
-  },
-  featureText: {
-	fontSize: 18,
-	color: '#ffffff',
-	marginBottom: 16,
-	fontWeight: '500',
-  },
-    featureSubText: {
-	fontSize: 14,
-	alignSelf: 'center',
-	color: '#ffffff',
-	fontWeight: '500',
-  },
-  ctaButton: {
+  addButton: {
 	backgroundColor: '#4CAF50',
-	paddingVertical: 18,
-	paddingHorizontal: 32,
-	borderRadius: 16,
+	paddingVertical: 10,
+	paddingHorizontal: 20,
+	borderRadius: 25,
 	alignItems: 'center',
-	marginBottom: 20,
+	marginBottom: 15,
 	shadowColor: '#000',
-	shadowOffset: { width: 0, height: 4 },
-	shadowOpacity: 0.3,
-	shadowRadius: 8,
-	elevation: 8,
+	shadowOffset: { width: 0, height: 2 },
+	shadowOpacity: 0.2,
+	shadowRadius: 4,
+	elevation: 4,
   },
-  ctaButtonText: {
-	fontSize: 20,
-	fontWeight: '700',
+  addButtonText: {
+	fontSize: 16,
+	fontWeight: '600',
 	color: '#ffffff',
-	letterSpacing: 0.5,
   },
-  footer: {
+  eventsContainer: {
+	flex: 1,
+  },
+  eventsTitle: {
+	fontSize: 18,
+	fontWeight: '600',
+	color: '#ffffff',
+	marginBottom: 12,
+	textAlign: 'center',
+  },
+  eventCard: {
+	backgroundColor: 'rgba(255, 255, 255, 0.95)',
+	borderRadius: 12,
+	padding: 16,
+	marginBottom: 12,
+	shadowColor: '#000',
+	shadowOffset: { width: 0, height: 2 },
+	shadowOpacity: 0.1,
+	shadowRadius: 4,
+	elevation: 3,
+  },
+  eventHeader: {
+	flexDirection: 'row',
+	justifyContent: 'space-between',
+	alignItems: 'flex-start',
+	marginBottom: 8,
+  },
+  eventTitle: {
+	fontSize: 18,
+	fontWeight: '700',
+	color: '#333',
+	flex: 1,
+	marginRight: 10,
+  },
+  eventDescription: {
+	fontSize: 14,
+	color: '#666',
+	marginBottom: 12,
+	lineHeight: 20,
+  },
+  participationInfo: {
+	flexDirection: 'row',
+	justifyContent: 'space-between',
+	alignItems: 'center',
+	marginBottom: 12,
+	paddingVertical: 8,
+	paddingHorizontal: 12,
+	backgroundColor: '#f8f9fa',
+	borderRadius: 8,
+  },
+  participantCount: {
+	fontSize: 14,
+	color: '#666',
+	fontWeight: '500',
+  },
+  participateButton: {
+	paddingVertical: 6,
+	paddingHorizontal: 12,
+	borderRadius: 15,
+	minWidth: 80,
 	alignItems: 'center',
   },
-	login: {
-	fontSize: 14,
-	color: '#c8e6c9',
-	textAlign: 'center',
-	lineHeight: 20,
-	marginBottom: 10,
+  participateButtonActive: {
+	backgroundColor: '#4CAF50',
   },
-  loginLink: {
-	color: '#ffffff',
+  participateButtonInactive: {
+	backgroundColor: '#007AFF',
+  },
+  participateButtonText: {
+	fontSize: 12,
 	fontWeight: '600',
-	textDecorationLine: 'underline',
-	cursor: 'pointer',
-  }
-  ,
-  footerText: {
-	fontSize: 14,
-	color: '#c8e6c9',
-	textAlign: 'center',
-	fontStyle: 'italic',
-	lineHeight: 20,
   },
-   item: {
-    backgroundColor: '#f9c2ff',
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
+  participateButtonTextActive: {
+	color: '#ffffff',
+  },
+  participateButtonTextInactive: {
+	color: '#ffffff',
+  },
+  eventFooter: {
+	borderTopWidth: 1,
+	borderTopColor: '#eee',
+	paddingTop: 8,
+  },
+  eventTime: {
+	fontSize: 12,
+	color: '#888',
+	marginBottom: 4,
+  },
+  eventLocation: {
+	fontSize: 12,
+	color: '#888',
+  },
+  actionButtons: {
+	flexDirection: 'row',
+	gap: 8,
+  },
+  editButton: {
+	backgroundColor: '#007AFF',
+	paddingHorizontal: 10,
+	paddingVertical: 6,
+	borderRadius: 6,
+  },
+  deleteButton: {
+	backgroundColor: '#FF3B30',
+	paddingHorizontal: 10,
+	paddingVertical: 6,
+	borderRadius: 6,
+  },
+  buttonText: {
+	fontSize: 14,
+	color: '#ffffff',
+  },
+  emptyContainer: {
+	alignItems: 'center',
+	paddingVertical: 40,
+  },
+  emptyText: {
+	fontSize: 16,
+	color: 'rgba(255, 255, 255, 0.8)',
+	textAlign: 'center',
+	marginBottom: 4,
+  },
+  emptySubText: {
+	fontSize: 14,
+	color: 'rgba(255, 255, 255, 0.6)',
+	textAlign: 'center',
+  },
+  loadingContainer: {
+	alignItems: 'center',
+	paddingVertical: 40,
+  },
+  loadingText: {
+	fontSize: 16,
+	color: 'rgba(255, 255, 255, 0.8)',
+	textAlign: 'center',
   },
 });

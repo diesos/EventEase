@@ -2,7 +2,7 @@ import { createEvent, editEvent as eventEdition, fetchEvents } from '@/features/
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, Alert, Modal, StyleSheet, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 import uuid from "react-native-uuid";
 import type { Event } from '../../../types';
@@ -19,9 +19,27 @@ type CreateEventModalProps = {
 const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving, onFinishSaving }: CreateEventModalProps) => {
   const [title, setTitle] = useState(editEvent?.title || '');
   const [description, setDescription] = useState(editEvent?.description || '');
-  const [dateEvent, setDateEvent] = useState<Event["date"]>(editEvent?.date || new Date());
-  const [location, setLocation] = useState(editEvent?.date || '');
+  const [dateEvent, setDateEvent] = useState<Event["date"]>(editEvent?.date ? new Date(editEvent.date) : new Date());
+  const [location, setLocation] = useState(editEvent?.location || '');
   const [idEvent, setEventId] = useState<Event["id"]>();
+
+  // Met à jour les champs quand editEvent change
+  useEffect(() => {
+    if (editEvent) {
+      setTitle(editEvent.title || '');
+      setDescription(editEvent.description || '');
+      // S'assurer que la date est un objet Date
+      const eventDate = editEvent.date ? new Date(editEvent.date) : new Date();
+      setDateEvent(eventDate);
+      setLocation(editEvent.location || '');
+    } else {
+      // Reset pour mode création
+      setTitle('');
+      setDescription('');
+      setDateEvent(new Date());
+      setLocation('');
+    }
+  }, [editEvent]);
 
   const setDate = (event: DateTimePickerEvent, date: Date) => {
     const {
@@ -48,7 +66,9 @@ const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving
         date: dateEvent ? dateEvent : new Date(),
         location: location.toString(),
         isActive: true,
-        imageUrl: ''
+        imageUrl: '',
+        participants: [], // Initialiser avec un array vide
+        maxParticipants: undefined
       };
 
       if (editEvent) {
@@ -59,7 +79,9 @@ const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving
           title: title ? title.trim() : editEvent.title,
           description: description ? description : editEvent.title,
           date: dateEvent ? dateEvent : editEvent.date,
-          location: location ? location : editEvent.location
+          location: location ? location : editEvent.location,
+          participants: editEvent.participants || [], // Conserver les participants existants
+          maxParticipants: editEvent.maxParticipants
         };
 
         await eventEdition(updatedEvent);
@@ -73,7 +95,7 @@ const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving
       setTitle('');
       setDescription('');
       setLocation('');
-      setDateEvent('')
+      setDateEvent(new Date())
       onFinishSaving?.();
       onClose();
     } catch (error) {
@@ -87,7 +109,7 @@ const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving
       setTitle('');
       setDescription('');
       setLocation('');
-      setDateEvent('')
+      setDateEvent(new Date())
     onClose();
   };
 
@@ -122,9 +144,19 @@ const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving
           </View>
 
           <View style={styles.inputContainer}>
+            <Text style={styles.label}>Lieu</Text>
+            <TextInput
+              style={styles.input}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Lieu de l'événement"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
                 <Text style={styles.label}> Date de l'évenement</Text>
                 <DateTimePicker
-                  value={dateEvent}
+                  value={dateEvent instanceof Date ? dateEvent : new Date()}
                   onChange={(event, date) => date && setDateEvent(date)}
                   minimumDate={new Date()}
                   timeZoneOffsetInSeconds={3600}
@@ -270,4 +302,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateMarkerModal;
+export default CreateEventModal;

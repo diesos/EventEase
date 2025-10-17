@@ -83,7 +83,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
 	flex: 1,
-	backgroundColor: '#244d9a',
+	backgroundColor: '#173786',
   },
   backgroundImage: {
 	flex: 1,
