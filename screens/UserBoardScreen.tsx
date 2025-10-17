@@ -37,11 +37,10 @@ export default function UserBoardScreen() {
 		const disconnecting = async() => {
 			await Disconnect();
 			setIsUserLoggedIn(false);
-
-			// Timeout de 2 secondes avant redirection
-			setTimeout(() => {
-				router.push('/Login');
-			}, 2000);
+			
+			Alert.alert("Déconnexion", "Vous avez été déconnecté avec succès !", [
+				{ text: "OK", onPress: () => router.push('/Login') }
+			]);
 		}
 
   return (

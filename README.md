@@ -6,11 +6,12 @@ Application mobile React Native permettant à l'association EventEase de gérer 
 
 ### ✅ Fonctionnalités obligatoires implémentées
 
-- **Authentification** : Connexion et inscription simplifiées
+- **Authentification** : Connexion et inscription avec validation des mots de passe identiques
 - **Gestion des événements** : Affichage de la liste complète des événements
 - **CRUD événements** : Ajout, modification et suppression d'événements
 - **Participation** : Marquer un événement comme "participé"
 - **Persistance locale** : Sauvegarde des données avec AsyncStorage
+- **Notifications** : Alertes de confirmation pour connexion, inscription et déconnexion
 
 ### 🎯 Fonctionnalités bonus implémentées
 
