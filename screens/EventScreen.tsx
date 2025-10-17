@@ -55,24 +55,21 @@ export default function UserBoardScreen() {
 			setIsUserLoggedIn(true);
 		if (loggedIn && !actualUser) {
 			setActualUser(loggedIn);
-			console.log('Actual User', actualUser)}
+		}
 			else {
 				setActualUser(null);
 			}
 		}
 
 		const fetchWeatherByDay = async (town: string) => {
-			console.log('ICIIIIIII',town);
-			try {
+				try {
 				const response = await WeatherService.fetchWeather(town)
 				if (response && response.main && response.main.temp !== undefined){
-					console.log(response)
 					const rawWeather = response.main.temp.toFixed(0)
 					return(rawWeather + '°')
 				}
 				return 'N/A';
 			} catch (error) {
-				console.error('Weather fetch error:', error);
 				return 'N/A';
 			}
 		}
@@ -102,11 +99,8 @@ export default function UserBoardScreen() {
 						}
 					});
 					setWeatherData(newWeatherData);
-					console.log(events)
-					console.log(typeof(events[0]?.date))
 				}
 				else {
-					alert("Pas d'event")
 					setEventFetched(null);
 				}
 			}
@@ -178,33 +172,23 @@ export default function UserBoardScreen() {
   };
 
   const handleParticipation = async (event: Event) => {
-    console.log('🔵 handleParticipation appelé');
-    console.log('🔵 actualUser:', actualUser);
-    console.log('🔵 event.participants avant:', event.participants);
-
     // Utiliser l'email comme identifiant si pas d'ID
     const userId = actualUser?.id || actualUser?.email;
 
     if (!userId) {
-      console.log('❌ Pas d\'utilisateur connecté ou pas d\'identifiant');
       return;
     }
 
-    console.log('🔵 userId utilisé:', userId);
-
     const isParticipating = event.participants?.includes(userId);
-    console.log('🔵 isParticipating:', isParticipating);
 
     let updatedParticipants: string[];
 
     if (isParticipating) {
       // Retirer l'utilisateur des participants
       updatedParticipants = event.participants.filter(id => id !== userId);
-      console.log('🔴 Désinscription, nouveaux participants:', updatedParticipants);
     } else {
       // Ajouter l'utilisateur aux participants
       updatedParticipants = [...(event.participants || []), userId];
-      console.log('🟢 Inscription, nouveaux participants:', updatedParticipants);
     }
 
     const updatedEvent = {
@@ -212,14 +196,11 @@ export default function UserBoardScreen() {
       participants: updatedParticipants
     };
 
-    console.log('🔵 Event à sauvegarder:', updatedEvent);
-
     try {
       await editEvent(updatedEvent);
-      console.log('✅ Event sauvegardé avec succès');
       setIsDeleting(true); // Pour rafraîchir la liste
     } catch (error) {
-      console.error('❌ Erreur lors de la participation:', error);
+      // Handle error silently or show user-friendly message
     }
   };
 

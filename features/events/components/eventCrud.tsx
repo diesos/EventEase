@@ -101,7 +101,6 @@ const CreateEventModal = ({ visible, onClose, editEvent, isSaving, onStartSaving
     } catch (error) {
       onFinishSaving?.();
       Alert.alert('Erreur', 'Impossible de sauvegarder l event');
-      console.error('Error saving event:', error);
     }
   };
 

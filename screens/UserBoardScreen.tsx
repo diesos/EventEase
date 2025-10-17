@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+	Alert,
 	ImageBackground,
 	SafeAreaView,
 	StatusBar,
@@ -27,7 +28,7 @@ export default function UserBoardScreen() {
 			setIsUserLoggedIn(true);
 		if (loggedIn && !actualUser) {
 			setActualUser(loggedIn);
-			console.log('Actual User', actualUser)}
+		}
 			else {
 				setActualUser(null);
 			}
@@ -36,7 +37,7 @@ export default function UserBoardScreen() {
 		const disconnecting = async() => {
 			await Disconnect();
 			setIsUserLoggedIn(false);
-			
+
 			// Timeout de 2 secondes avant redirection
 			setTimeout(() => {
 				router.push('/Login');
@@ -57,10 +58,6 @@ export default function UserBoardScreen() {
 		resizeMode="cover"
 	  >
 		<View style={styles.overlay}>
-		  {/* Back Button */}
-		  <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-			<Text style={styles.backButtonText}>← Retour</Text>
-		  </TouchableOpacity>
 
 		  {/* Header */}
 		  <View style={styles.header}>

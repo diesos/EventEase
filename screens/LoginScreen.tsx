@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import React from "react";
 import {
+  Alert,
   ImageBackground,
   SafeAreaView,
   StatusBar,
@@ -24,7 +25,6 @@ export default function Index() {
 
   const handleLogin = async () => {
     if (!formIsValid) {
-      alert("Veuillez remplir tous les champs.");
       return;
     }
     const user: UserLogin = {
@@ -35,15 +35,14 @@ export default function Index() {
     try {
       const response = await LoginService(user);
       if (response.success) {
-        console.log("Login response:", user);
-        alert("Connexion réussie !");
-        router.push("/UserBoard");
+        Alert.alert("Succès", "Connexion réussie !", [
+          { text: "OK", onPress: () => router.push("/UserBoard") }
+        ]);
       } else {
-        alert(`Erreur lors de la connexion : ${response.message}`);
+        Alert.alert("Erreur", response.message || "Erreur lors de la connexion");
       }
     } catch (error) {
-      alert("Une erreur est survenue. Veuillez réessayer plus tard.");
-      console.error("Login error:", error);
+      Alert.alert("Erreur", "Une erreur est survenue. Veuillez réessayer plus tard.");
     }
   }
   return (

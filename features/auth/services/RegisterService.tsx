@@ -19,7 +19,6 @@ export const Register = async (user: User) => {
 		  return { success: true, user };
 		}
 	  } catch (error) {
-		console.error('Register error:', error);
 		return { success: false, message: 'Une erreur est survenue lors de l\'inscription.' };
 	  }
 };
@@ -36,7 +35,6 @@ export const CheckEmailExists = async (email: string) => {
 		  return false;
 		}
 	  } catch (error) {
-		console.error('CheckEmailExists error:', error);
 		return false;
 	  }
 };

@@ -17,8 +17,6 @@ export default function Index() {
           setIsUserLoggedIn(loggedIn);
           if (loggedIn) {
             setActualUser(loggedIn);
-            console.log("Logged in user:", loggedIn);
-            console.log("Actual user:", actualUser);
             }
             else {
               setActualUser(null);

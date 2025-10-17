@@ -1,50 +1,116 @@
-# Welcome to your Expo app 👋
+# EventEase
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application mobile React Native permettant à l'association EventEase de gérer ses événements (conférences, ateliers, sorties). Les membres et bénévoles peuvent consulter les événements, en créer de nouveaux et gérer leur participation.
 
-## Get started
+## 🚀 Fonctionnalités
 
-1. Install dependencies
+### ✅ Fonctionnalités obligatoires implémentées
+
+- **Authentification** : Connexion et inscription simplifiées
+- **Gestion des événements** : Affichage de la liste complète des événements
+- **CRUD événements** : Ajout, modification et suppression d'événements
+- **Participation** : Marquer un événement comme "participé"
+- **Persistance locale** : Sauvegarde des données avec AsyncStorage
+
+### 🎯 Fonctionnalités bonus implémentées
+
+- **Calendrier** : Affichage des événements sur un calendrier (react-native-calendars)
+- **API Météo** : Intégration de l'API OpenWeather pour afficher la météo du jour de l'événement
+- **Interface améliorée** : Thème cohérent et navigation fluide
+
+## 🛠 Technologies utilisées
+
+- **Framework** : React Native avec Expo
+- **Navigation** : React Navigation (Tab Navigation)
+- **Persistance** : AsyncStorage
+- **Calendrier** : react-native-calendars
+- **API externe** : OpenWeather API
+- **Langage** : TypeScript
+
+## 📱 Structure du projet
+
+```
+EventEase/
+├── app/                    # Écrans principaux avec Expo Router
+│   └── (tabs)/            # Navigation par onglets
+├── features/              # Fonctionnalités par domaine
+│   ├── auth/             # Authentification
+│   ├── events/           # Gestion des événements
+│   └── weather/          # Service météo
+├── screens/              # Écrans de l'application
+├── components/           # Composants réutilisables
+├── types/               # Définitions TypeScript
+└── constants/           # Constantes et thèmes
+```
+
+## 🏗 Architecture technique
+
+**Architecture modulaire** : Organisation par fonctionnalités (features) avec séparation des responsabilités :
+
+- **Services** : Logique métier et appels API
+- **Components** : Interface utilisateur réutilisable
+- **Hooks** : Logique d'état personnalisée
+- **Types** : Typage TypeScript strict
+
+**Choix techniques** :
+
+- Expo pour un développement rapide et cross-platform
+- AsyncStorage pour la persistance locale simple
+- Architecture en couches pour la maintenabilité
+- API REST pour l'intégration météo
+
+## 🚀 Installation et lancement
+
+1. **Installation des dépendances**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Démarrage de l'application**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Options de lancement**
+   - Expo Go (smartphone)
+   - Émulateur Android
+   - Simulateur iOS
+   - Navigateur web
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## 📋 Utilisation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. **Connexion/Inscription** : Créez un compte ou connectez-vous
+2. **Consulter les événements** : Parcourez la liste ou le calendrier
+3. **Créer un événement** : Ajoutez titre, description, date et lieu
+4. **Météo** : Consultez les prévisions météo pour chaque événement
+5. **Participation** : Marquez votre participation aux événements
 
-## Get a fresh project
+## 🎯 Développement (4 jours)
 
-When you're ready, run:
+- **Jour 1** : ✅ Mise en place projet, écrans de base, navigation
+- **Jour 2** : ✅ Gestion CRUD des événements
+- **Jour 3** : ✅ Calendrier, API météo, amélioration design
+- **Jour 4** : ✅ Finalisation et tests
 
-```bash
-npm run reset-project
+## 📦 Dépendances principales
+
+```json
+{
+  "@react-native-async-storage/async-storage": "2.2.0",
+  "@react-navigation/bottom-tabs": "^7.4.0",
+  "react-native-calendars": "^1.1313.0",
+  "expo": "~54.0.13",
+  "react-native": "0.81.4"
+}
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 🏆 Conformité au cahier des charges
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- ✅ Application React Native avec Expo
+- ✅ React Navigation implémenté
+- ✅ Persistance locale fonctionnelle
+- ✅ Code structuré et organisé
+- ✅ Toutes les fonctionnalités obligatoires
+- ✅ Fonctionnalités bonus

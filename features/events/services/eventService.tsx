@@ -6,11 +6,8 @@ export const fetchEvents = async (): Promise<Event[]> => {
 	try {
 
 		const events = await AsyncStorage.getItem('events');
-		if (!events)
-			console.log("Pas d'events")
 		return events ? JSON.parse(events) : [];
 	} catch (error) {
-		console.error("Error fetching events:", error);
 		return [];
 	}
 };
@@ -40,7 +37,6 @@ export const createEvent = async (newEvent: Event): Promise<{ success: boolean; 
 		}
 	}
 	catch{
-		console.log( 'error returning creating events')
 	}
 }
 
@@ -72,7 +68,6 @@ export const editEvent = async (event: Event): Promise <{success : boolean, mess
 		};
 	}
 	catch {
-		alert('Error editing event')
 	}
 }
 
@@ -93,7 +88,6 @@ export const deleteEvent = async (eventId: any): Promise<{ success: boolean; mes
 		if (foundEventIndex !== -1) {
 			const updatedEvents = events.filter((v: Event) => v.id !== eventId);
 			await AsyncStorage.setItem('events', JSON.stringify(updatedEvents));
-			console.log("Event supprimée avec l'id: ", eventId)
 			return {
 				success: true,
 				message: 'Event supprimée avec succès'
@@ -104,7 +98,6 @@ export const deleteEvent = async (eventId: any): Promise<{ success: boolean; mes
 			message: 'Event non trouvé'
 		};
 	} catch (err) {
-		console.error('Error deleting event:', err);
 		return {
 			success: false,
 			message: 'Erreur lors de la suppression'

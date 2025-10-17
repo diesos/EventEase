@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import React from "react";
 import {
+  Alert,
   ImageBackground,
   SafeAreaView,
   StatusBar,
@@ -20,12 +21,12 @@ export default function Index() {
   const [firstName, setFirstName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const formIsValid = name && firstName && email && password;
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const formIsValid = name && firstName && email && password && confirmPassword && password === confirmPassword;
 
 
 const handleRegister = async () => {
   if (!formIsValid) {
-    alert("Veuillez remplir tous les champs.");
     return;
   }
 
@@ -39,15 +40,14 @@ const handleRegister = async () => {
   try {
     const response = await RegisterService(newUser);
     if (response.success) {
-      alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
-      console.log("Registration response:", newUser);
-      router.push("/Login");
+      Alert.alert("Succès", "Inscription réussie ! Vous pouvez maintenant vous connecter.", [
+        { text: "OK", onPress: () => router.push("/Login") }
+      ]);
     } else {
-      alert(`Erreur lors de l'inscription : ${response.message}`);
+      Alert.alert("Erreur", response.message || "Erreur lors de l'inscription");
     }
   } catch (error) {
-    alert("Une erreur est survenue. Veuillez réessayer plus tard.");
-    console.error("Registration error:", error);
+    Alert.alert("Erreur", "Une erreur est survenue. Veuillez réessayer plus tard.");
   }
 }
   return (
@@ -121,6 +121,9 @@ const handleRegister = async () => {
               placeholder="Votre mot de passe"
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               secureTextEntry
+              autoComplete="off"
+              textContentType="none"
+              passwordRules=""
             />
           </View>
 
@@ -128,11 +131,14 @@ const handleRegister = async () => {
             <Text style={styles.label}>Re-tapez votre mot de passe *</Text>
             <TextInput
               style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Votre mot de passe"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirmez votre mot de passe"
               placeholderTextColor="rgba(255, 255, 255, 0.4)"
               secureTextEntry
+              autoComplete="off"
+              textContentType="none"
+              passwordRules=""
             />
           </View>
           </View>
