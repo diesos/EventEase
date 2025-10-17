@@ -1,3 +1,12 @@
+/**
+ * 🔐 SERVICE D'AUTHENTIFICATION
+ * 
+ * Gère la connexion et déconnexion des utilisateurs
+ * - Vérification des credentials depuis AsyncStorage
+ * - Gestion de la session utilisateur
+ * - Stockage de l'utilisateur connecté
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { UserLogin } from '../../../types';
 
